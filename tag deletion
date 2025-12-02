@@ -1,3 +1,4 @@
+# CONFIG
 basePath = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus"   # replace with root folder to scan
 allowedSuffixes = (".stVal", ".trigger", ".ctlVal")  # suffixes to check in the OPC path
 VERBOSE = False  # Set to True for detailed logging; False for efficiency
