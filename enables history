@@ -1,6 +1,8 @@
 import system
 
 def enableHistoryForTag(tagPath):
+
+    # CONFIG
     historyProvider = 'ST_UTIL_DB_PRI'  # REPLACE WITH A VALID PROVIDER (e.g., from Tag Browser)
     
     try:
