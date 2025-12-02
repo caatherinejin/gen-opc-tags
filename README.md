@@ -21,6 +21,6 @@ scripts to import generator opc tags into ignition:
 14. run file in ignition script console
 
 **enables history**
-15. paste valid history provider database into **enables history** file
-16. 
-
+15. paste destination folder into **enables history** file
+16. paste history provider database into **enables history** file (eg. ST_UTIL_DB_PRI)
+17. run file in ignition script console
