@@ -1,11 +1,11 @@
 import system
 
-# CONFIG (pt1/2)
+# CONFIG (1/2)
 rootPath = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_dse2_modbus"
 
 
 def enableHistoryForTag(tagPath):
-	# CONFIG (pt2/2)
+	# CONFIG (2/2)
     historyProvider = 'ST_UTIL_DB_PRI'  # REPLACE WITH A VALID PROVIDER (e.g., from Tag Browser)
     
     try:
