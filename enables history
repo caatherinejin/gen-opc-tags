@@ -1,0 +1,136 @@
+import system
+
+def enableHistoryForTag(tagPath):
+    historyProvider = 'ST_UTIL_DB_PRI'  # REPLACE WITH A VALID PROVIDER (e.g., from Tag Browser)
+    
+    try:
+        # Step 1: Validate the tag path
+        if not tagPath or not isinstance(tagPath, str):
+            raise ValueError("Invalid tagPath: It must be a non-empty string.")
+        
+        # Check if the tag exists (similar to your script's browse check)
+        try:
+            existingTag = system.tag.browseTags(tagPath, None, None)
+            if not existingTag:
+                raise ValueError("Tag not found: {}. Verify the path exists.".format(tagPath))
+        except Exception as browseError:
+            raise ValueError("Error browsing tag: {}. Check permissions or path.".format(str(browseError)))
+        
+        # Step 2: Build the tag configuration dict (like your tagData for alarms)
+        tagConfig = {
+            'historyEnabled': True,
+            'historyProvider': historyProvider
+        }
+        
+        # Optional: Add other properties if needed (e.g., from your CSV)
+        # For example, if you have custom settings, add them here like in your script
+        
+        print("Enabling history for tag: {}".format(tagPath))
+        print("Tag config: {}".format(tagConfig))
+        
+        # Step 3: Modify the tag directly (like your add_alarm call)
+        system.tag.editTag(tagPath, tagConfig)
+        
+        print("History enabled successfully for tag: {}".format(tagPath))
+        
+        # Optional: Basic post-check (may not work in Designer, but try)
+        try:
+            updatedTag = system.tag.browseTags(tagPath, None, None)
+            if updatedTag:
+                print("Post-check: Tag found and updated.")
+            else:
+                print("Post-check: Tag not found after update.")
+        except Exception as checkError:
+            print("Post-check failed: {}".format(str(checkError)))
+    
+    except ValueError as ve:
+        print("Error: {}".format(str(ve)))
+    except Exception as e:
+        print("Unexpected Error: {}".format(str(e)))
+
+def process_folder(currentPath):
+    """
+    Recursively browses the current folder, enables history on AtomicTags, and recurses into subfolders.
+    """
+    try:
+        print("Browsing current folder: {}".format(currentPath))
+        
+        # Browse the current path (non-recursive, just this level)
+        browseResults = system.tag.browse(currentPath)
+        
+        if not browseResults:
+            print("No items found in folder: {}".format(currentPath))
+            return
+        
+        print("Found {} items in folder.".format(len(browseResults)))
+        
+        atomicTagsProcessed = 0
+        foldersProcessed = 0
+        
+        for item in browseResults:
+            try:
+                # Dict access for tagType and name (str conversion for Java objects)
+                tagType = str(item.get('tagType')) if item.get('tagType') is not None else ''
+                name = str(item.get('name')) if item.get('name') is not None else ''
+                
+                # Debug print (optional, comment out if too verbose)
+                print("Debug - Item name: '{}', raw tagType: '{}'".format(name, tagType))
+                
+                # Robust check: convert to str, strip, lower for matching
+                normalizedType = str(tagType).strip().lower() if tagType else ''
+                
+                if normalizedType == 'atomictag':
+                    # Construct full path: currentPath + "/" + name
+                    fullTagPath = str(currentPath)
+                    if not fullTagPath.endswith('/'):
+                        fullTagPath += '/'
+                    fullTagPath += str(name)
+                    
+                    print("Found AtomicTag: {}".format(fullTagPath))
+                    enableHistoryForTag(fullTagPath)
+                    atomicTagsProcessed += 1
+                elif normalizedType == 'folder':
+                    # Recurse into subfolder
+                    subFolderPath = str(currentPath)
+                    if not subFolderPath.endswith('/'):
+                        subFolderPath += '/'
+                    subFolderPath += str(name)
+                    print("Entering subfolder: {}".format(subFolderPath))
+                    process_folder(subFolderPath)
+                    foldersProcessed += 1
+                else:
+                    print("Skipping non-AtomicTag/Folder: {} (normalized type: '{}')".format(name, normalizedType))
+            except Exception as itemError:
+                print("Error processing item in folder '{}': {}".format(currentPath, str(itemError)))
+        
+        print("Processed in folder '{}': {} AtomicTags, {} subfolders.".format(currentPath, atomicTagsProcessed, foldersProcessed))
+    
+    except Exception as e:
+        print("Unexpected Error browsing folder '{}': {}".format(currentPath, str(e)))
+
+def enableHistoryForFolderTags(rootPath):
+    """
+    Starts recursive traversal from the root folder path.
+    """
+    try:
+        print("Starting recursive history enable for folder and subfolders: {}".format(rootPath))
+        
+        # Confirm root exists
+        testBrowse = system.tag.browse(rootPath)
+        if not testBrowse:
+            print("Root folder not found: {}".format(rootPath))
+            return
+        
+        print("Root folder confirmed ({} items). Starting recursion.".format(len(testBrowse)))
+        
+        # Start recursion
+        process_folder(rootPath)
+        
+        print("Completed recursive enabling for folder and all subfolders: {}".format(rootPath))
+    
+    except Exception as e:
+        print("Unexpected Error: {}".format(str(e)))
+
+# Example usage - Your specific root folder path
+rootPath = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_dse2_modbus"
+enableHistoryForFolderTags(rootPath)
