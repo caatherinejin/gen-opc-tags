@@ -4,7 +4,6 @@ scripts to import generator opc tags into ignition:
 
 1. create source folder in desired tag provider _(eg. opc data in ST_POWER)_
 2. under tag browser, browse devices --> import OPC tags into source folder _(eg. ST38_GRID_RTAC --> DeviceSet --> Logic --> Resources --> Application --> GlobalVars --> sanchez_emcp2_MODBUS)_
-3. 
 4. copy path of source folder _(eg. [ST_POWER]Microgrid/Gen Garden/Data Tags/opc data)_\
 5. paste into **tag import** file
 6. create destination folder _(eg. sanchez_emcp2_modbus)_
