@@ -1,8 +1,11 @@
 import system
 
-def enableHistoryForTag(tagPath):
+# CONFIG (pt1/2)
+rootPath = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_dse2_modbus"
 
-    # CONFIG
+
+def enableHistoryForTag(tagPath):
+	# CONFIG (pt2/2)
     historyProvider = 'ST_UTIL_DB_PRI'  # REPLACE WITH A VALID PROVIDER (e.g., from Tag Browser)
     
     try:
@@ -133,6 +136,4 @@ def enableHistoryForFolderTags(rootPath):
     except Exception as e:
         print("Unexpected Error: {}".format(str(e)))
 
-# Example usage - Your specific root folder path
-rootPath = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_dse2_modbus"
 enableHistoryForFolderTags(rootPath)
