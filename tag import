@@ -1,0 +1,222 @@
+import system.tag
+
+# Configuration - Using full paths for browsing/reading
+SOURCE_PATH = "[ST_POWER]Microgrid/Gen Garden/Data Tags/opc data/test folder delete me/GlobalVars/sanchez_emcp2_MODBUS"
+DESTINATION_PATH = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus"
+BASE_OPC_PATH = "nsu=CODESYSSPV3/3S/IecVarAccess;s=|var|Logic.Application.sanchez_emcp2_MODBUS"  # Base OPC UA path
+TAG_PROVIDER = "ST_POWER"
+OPC_SERVER = "ST38_GRID_RTAC"  # OPC UA server name
+
+
+print("Script started successfully.")  # Confirm execution
+
+def debug_path(source_path):
+    """
+    Debug function to check if the source path exists.
+    """
+    print("Debugging source path...")
+    try:
+        system.tag.browseTags(parentPath=source_path, recursive=False)
+        print("Source path '{}' exists.".format(source_path))
+        return True
+    except Exception as e:
+        print("Error browsing source path '{}': {}. Possible fixes:".format(source_path, str(e)))
+        print("  - Verify the path in Tag Browser and copy-paste exactly.")
+        print("  - Ensure you have read permissions.")
+        print("  - Check for typos in folder names (e.g., 'Gen Garden').")
+        return False
+
+def convert_document_to_dict(obj, tag_name=None):
+    """
+    Recursively convert PyDocumentObjectAdapter or similar to a Python dict.
+    Skip keys that match the tag name or are empty.
+    """
+    if isinstance(obj, dict):
+        # Filter out the tag name key and empty dicts
+        filtered = {k: convert_document_to_dict(v, tag_name) for k, v in obj.items() if k != tag_name and (not isinstance(v, dict) or v)}
+        if tag_name:
+            print("Filtered keys for '{}': {}".format(tag_name, list(filtered.keys())))
+        return filtered
+    elif isinstance(obj, list):
+        return [convert_document_to_dict(item, tag_name) for item in obj]
+    elif hasattr(obj, '__class__') and 'PyDocumentObjectAdapter' in str(type(obj)):
+        # Print all original keys for debugging
+        original_keys = list(obj.keys())
+        print("Original keys in PyDocumentObjectAdapter for '{}': {}".format(tag_name, original_keys))
+        # Filter out the tag name key and empty dicts
+        filtered = {k: convert_document_to_dict(v, tag_name) for k, v in obj.items() if k != tag_name and (not isinstance(v, dict) or v)}
+        print("Filtered keys for '{}': {}".format(tag_name, list(filtered.keys())))
+        return filtered
+    else:
+        return obj
+
+def recursive_tag_processor(source_path, destination_path, base_opc_path, tag_provider, opc_server):
+    """
+    Recursively processes tags from the source folder and creates OPC UA tags in the destination.
+    """
+    try:
+        # Get all tags and subfolders in the current source path
+        tags_and_folders = system.tag.browseTags(parentPath=source_path, recursive=False)
+        
+        print("Processing {} items in '{}'.".format(len(tags_and_folders), source_path))
+        
+        for item in tags_and_folders:
+            # Try to use BrowseTag methods; fallback to string parsing
+            try:
+                item_name = item.getName()
+                item_path = item.getPath().toStringFull()
+                is_folder = item.isFolder()
+            except AttributeError:
+                # Fallback: item is the path string
+                item_path = str(item)
+                item_name = item_path.split('/')[-1]
+                is_folder = False  # Assume all are tags since no folders were detected
+                print("Using fallback for item: name='{}', path='{}'".format(item_name, item_path))
+            
+            if is_folder:
+                # If it's a folder, create corresponding folder in destination and recurse
+                new_destination = "{}/{}".format(destination_path, item_name)
+                updated_opc_path = "{}.{}".format(base_opc_path, item_name)
+                print("Recursing into folder '{}' with new destination '{}' and updated OPC path '{}'.".format(item_path, new_destination, updated_opc_path))
+                create_folder_if_not_exists(new_destination, tag_provider)
+                recursive_tag_processor(item_path, new_destination, updated_opc_path, tag_provider, opc_server)
+            else:
+                # If it's a tag, check if it's a document tag (has nested data)
+                print("Processing tag '{}'.".format(item_path))
+                try:
+                    tag_value = system.tag.readBlocking([item_path])[0].value
+                    print("Tag value type: {}".format(type(tag_value)))
+                    
+                    # Check if it's a document object (PyDocumentObjectAdapter)
+                    if tag_value is None:
+                        print("Tag '{}' has None value, skipping.".format(item_name))
+                        continue
+                    
+                    # Try to convert to dict if it's a document object
+                    data_dict = None
+                    if hasattr(tag_value, '__class__') and 'PyDocumentObjectAdapter' in str(type(tag_value)):
+                        # Convert using recursive function, passing tag_name to filter
+                        data_dict = convert_document_to_dict(tag_value, item_name)
+                        print("Converted document object to dict with {} keys.".format(len(data_dict)))
+                    elif isinstance(tag_value, dict):
+                        data_dict = convert_document_to_dict(tag_value, item_name)
+                        print("Filtered dict with {} keys.".format(len(data_dict)))
+                    else:
+                        print("Tag '{}' is not a document tag, skipping.".format(item_name))
+                        continue
+                    
+                    # Process the dict
+                    doc_folder_path = "{}/{}".format(destination_path, item_name)
+                    tag_opc_path = "{}.{}".format(base_opc_path, item_name)
+                    
+                    # Ensure the document folder exists
+                    create_folder_if_not_exists(doc_folder_path, tag_provider)
+                    
+                    # Recursively create OPC UA tags from the nested data
+                    create_opc_tags_from_dict(data_dict, doc_folder_path, tag_opc_path, tag_provider, opc_server, item_name)
+                except Exception as e:
+                    print("Error reading tag '{}': {}".format(item_path, str(e)))
+    
+    except Exception as e:
+        print("Error processing path {}: {}".format(source_path, str(e)))
+
+def create_folder_if_not_exists(folder_path, tag_provider):
+    """
+    Creates a folder if it doesn't exist. folder_path is full.
+    """
+    try:
+        # Try to browse into the folder path; succeeds if it exists
+        system.tag.browseTags(parentPath=folder_path, recursive=False)
+        print("Folder '{}' already exists.".format(folder_path))
+    except:
+        # Folder doesn't exist, create it
+        try:
+            folder_name = folder_path.split('/')[-1]
+            parent_path = '/'.join(folder_path.split('/')[:-1])  # Parent path
+            folder_config = {
+                "name": folder_name,
+                "tagType": "Folder"
+            }
+            system.tag.configure(parent_path, folder_config)  # Use parent path for configure
+            print("Created folder '{}'.".format(folder_path))
+        except Exception as e:
+            print("Failed to create folder '{}': {}. Skipping.".format(folder_path, str(e)))
+
+def create_opc_tags_from_dict(data_dict, base_path, base_opc_path, tag_provider, opc_server, tag_name):
+    """
+    Recursively creates OPC UA tags from a dictionary structure with explicit typecasting. base_path is full.
+    """
+    for key, value in data_dict.items():
+        # Skip if key matches the tag name to avoid self-nesting
+        if key == tag_name:
+            print("Skipping key '{}' to avoid self-nesting.".format(key))
+            continue
+        
+        if isinstance(value, dict):
+            # Create subfolder under base_path
+            folder_config = {
+                "name": key,
+                "tagType": "Folder"
+            }
+            print("Creating subfolder '{}' under '{}'.".format(key, base_path))
+            try:
+                system.tag.configure(base_path, folder_config)
+                # Recurse with the new base path
+                new_base = "{}/{}".format(base_path, key)
+                updated_opc_path = "{}.{}".format(base_opc_path, key)
+                create_opc_tags_from_dict(value, new_base, updated_opc_path, tag_provider, opc_server, tag_name)
+            except Exception as e:
+                print("Failed to create subfolder '{}': {}. Skipping.".format(key, str(e)))
+        else:
+			if isinstance(value, bool):
+				ignition_data_type = "Boolean"
+				cast_value = bool(value)
+			elif isinstance(value, float):
+				ignition_data_type = "Float8"
+				cast_value = float(value)
+			elif isinstance(value, str):
+				ignition_data_type = "String"
+				cast_value = str(value)
+			elif isinstance(value, int):
+				ignition_data_type = "Int4" if -2147483648 <= value <= 2147483647 else "Long"
+				cast_value = int(value)
+			else:
+				ignition_data_type = "String"
+				cast_value = str(value)
+			
+			try:
+				if not isinstance(cast_value, bool):
+					cast_value = float(cast_value)
+					ignition_data_type = "Float8"
+			except:
+				print(67)
+				pass
+
+            # Build the full OPC UA path
+			opc_item_path = "{}.{}".format(base_opc_path, key)
+            
+            # Create OPC UA tag configuration with cast value
+			tag_config = {
+			    "name": key,
+			    "tagType": "AtomicTag",
+			    "dataType": ignition_data_type,
+			    "value": cast_value,
+			    "valueSource": "opc",
+			    "opcItemPath": opc_item_path,
+			    "opcServer": opc_server
+			}
+			print("Creating OPC UA tag '{}' under '{}' with type '{}' and path '{}'.".format(key, base_path, ignition_data_type, opc_item_path))
+			try:
+			    system.tag.configure(base_path, tag_config)
+			except Exception as e:
+			    print("Failed to create OPC UA tag '{}' under '{}': {}. Skipping.".format(key, base_path, str(e)))
+
+# Ensure destination path exists
+print("Ensuring destination path exists...")
+create_folder_if_not_exists(DESTINATION_PATH, TAG_PROVIDER)
+
+# Debug and run
+if debug_path(SOURCE_PATH):
+    recursive_tag_processor(SOURCE_PATH, DESTINATION_PATH, BASE_OPC_PATH, TAG_PROVIDER, OPC_SERVER)
+else:
+    print("Debug failed. Please verify the path.")
