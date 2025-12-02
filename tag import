@@ -1,14 +1,14 @@
 import system.tag
 
-# Configuration - Using full paths for browsing/reading
-SOURCE_PATH = "[ST_POWER]Microgrid/Gen Garden/Data Tags/opc data/test folder delete me/GlobalVars/sanchez_emcp2_MODBUS"
-DESTINATION_PATH = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus"
-BASE_OPC_PATH = "nsu=CODESYSSPV3/3S/IecVarAccess;s=|var|Logic.Application.sanchez_emcp2_MODBUS"  # Base OPC UA path
-TAG_PROVIDER = "ST_POWER"
-OPC_SERVER = "ST38_GRID_RTAC"  # OPC UA server name
+# CONFIG
+SOURCE_PATH = "[ST_POWER]Microgrid/Gen Garden/Data Tags/opc data/test folder delete me/GlobalVars/sanchez_emcp2_MODBUS" # replace with source folder that contains raw opc tags
+DESTINATION_PATH = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus" # replace with destination folder
+BASE_OPC_PATH = "nsu=CODESYSSPV3/3S/IecVarAccess;s=|var|Logic.Application.sanchez_emcp2_MODBUS"  # replace with path of opc device
+TAG_PROVIDER = "ST_POWER" # replace with tag provider
+OPC_SERVER = "ST38_GRID_RTAC"  # replace with opc ua name
 
 
-print("Script started successfully.")  # Confirm execution
+print("Script started successfully.")
 
 def debug_path(source_path):
     """
