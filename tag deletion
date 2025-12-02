@@ -1,0 +1,173 @@
+# ---- CONFIG ----
+basePath = "[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus"   # Change this to the root folder to scan
+allowedSuffixes = (".stVal", ".trigger", ".ctlVal")  # Suffixes to check in the OPC path (not tag path)
+VERBOSE = False  # Set to True for detailed logging; False for efficiency (less output)
+# -----------------
+def processFolder(path):
+    """
+    Recursively scans the folder and collects tags to delete.
+    Returns a list of tag paths that do not match the allowed suffixes.
+    """
+    if VERBOSE:
+        print "Scanning folder:", path
+    
+    tags_to_delete = []  # List to collect tags for deletion
+    
+    try:
+        browseResults = system.tag.browse(path).getResults()
+    except Exception as e:
+        if VERBOSE:
+            print "  ERROR browsing folder:", e
+        return tags_to_delete
+    
+    for item in browseResults:
+        fullPath = item['fullPath']
+        
+        if item['hasChildren']:
+            if VERBOSE:
+                print "Entering subfolder:", fullPath
+            # Recursively collect tags from subfolder
+            sub_tags = processFolder(fullPath)
+            tags_to_delete.extend(sub_tags)  # Add subfolder tags to the list
+        else:
+            if VERBOSE:
+                print "Inspecting tag:", fullPath
+            
+            # Get tag config to inspect OPC path
+            try:
+                config = system.tag.getConfiguration(fullPath)[0]
+            except Exception as e:
+                if VERBOSE:
+                    print "  ERROR reading config:", e
+                continue
+            
+            opcItem = config.get('opcItemPath', None)
+            
+            if opcItem is None or opcItem == "":
+                if VERBOSE:
+                    print "  No OPC path, skipping."
+                continue
+            
+            if VERBOSE:
+                print "  OPC Path:", opcItem
+            
+            # Check OPC suffix
+            if opcItem.endswith(allowedSuffixes):
+                if VERBOSE:
+                    print "  ✓ Allowed suffix — keeping tag."
+            else:
+                if VERBOSE:
+                    print "  ✗ Unallowed suffix — marking for deletion!"
+                tags_to_delete.append(str(fullPath))  # Add to list (ensure string)
+    
+    if VERBOSE:
+        print "Finished folder:", path
+    return tags_to_delete
+def countAtomicTags(path):
+    """
+    Recursively counts the number of atomic (non-folder) tags in the folder and its subfolders.
+    Returns the count. Optimized to avoid redundant operations.
+    """
+    count = 0
+    try:
+        browseResults = system.tag.browse(path).getResults()
+    except Exception as e:
+        if VERBOSE:
+            print "  ERROR browsing folder for tag count:", e
+        return 0
+    
+    if VERBOSE:
+        print "  Counting atomic tags in:", path
+        print "  Found {} items in this folder.".format(len(browseResults))
+    
+    for item in browseResults:
+        fullPath = item['fullPath']
+        tagType = item.get('tagType', 'Unknown')
+        
+        # Fix: Convert tagType to string for comparison (handles Java String)
+        is_folder = str(tagType) == 'Folder'
+        if is_folder:
+            if VERBOSE:
+                print "    Recursing into subfolder:", fullPath
+            count += countAtomicTags(fullPath)
+        else:
+            if VERBOSE:
+                print "    Found atomic tag:", fullPath
+            count += 1
+    
+    if VERBOSE:
+        print "  Total atomic tags in '{}' : {}".format(path, count)
+    return count
+def deleteEmptyFolders(path):
+    """
+    Recursively deletes empty folders (folders with no atomic tags in their subtree).
+    Checks from the bottom up to handle nested folders correctly.
+    Assumes unnecessary tags have already been removed.
+    """
+    if VERBOSE:
+        print "Checking for empty folders in:", path
+    
+    try:
+        browseResults = system.tag.browse(path).getResults()
+    except Exception as e:
+        if VERBOSE:
+            print "  ERROR browsing folder:", e
+        return
+    
+    if VERBOSE:
+        print "  Found {} items in this folder.".format(len(browseResults))
+    
+    folders_to_delete = []  # Collect empty folders
+    
+    for item in browseResults:
+        fullPath = item['fullPath']
+        tagType = item.get('tagType', 'Unknown')
+        
+        # Fix: Convert tagType to string for comparison
+        is_folder = str(tagType) == 'Folder'
+        if is_folder:
+            # Recursively check subfolders first
+            if VERBOSE:
+                print "    Recursing into subfolder:", fullPath
+            deleteEmptyFolders(fullPath)
+            
+            # After checking subfolders, check if this folder has any atomic tags in its subtree
+            tag_count = countAtomicTags(fullPath)
+            if VERBOSE:
+                print "  Folder '{}' has {} atomic tags.".format(fullPath, tag_count)
+            if tag_count == 0:
+                folders_to_delete.append(str(fullPath))
+                if VERBOSE:
+                    print "  Marking empty folder for deletion:", fullPath
+        # Non-folder items (tags) are skipped, as we're focusing on folders
+    
+    # Delete collected empty folders in reverse order (bottom-up)
+    for folder in reversed(folders_to_delete):
+        try:
+            system.tag.deleteTags([folder])  # Use deleteTags for consistency
+            if VERBOSE:
+                print "  → Deleted empty folder:", folder
+        except Exception as e:
+            if VERBOSE:
+                print "  ERROR deleting empty folder:", e
+    
+    if VERBOSE:
+        print "Finished checking folder:", path
+# ---- RUN SCRIPT ----
+print "===== Starting Recursive Tag Cleanup (Efficient Mode) ====="
+# Collect all tags to delete
+tags_to_delete = processFolder(basePath)
+# Bulk delete all collected tags
+if tags_to_delete:
+    print "Deleting {} tags...".format(len(tags_to_delete))
+    try:
+        system.tag.deleteTags(tags_to_delete)
+        print "  → Successfully deleted {} tags.".format(len(tags_to_delete))
+    except Exception as e:
+        print "  ERROR deleting tags:", e
+else:
+    print "No tags to delete."
+print "===== Tag Cleanup Complete. Now Cleaning Empty Folders (Efficient Mode) ====="
+# Now delete empty folders
+deleteEmptyFolders(basePath)
+print "===== Empty Folder Cleanup Complete ====="
