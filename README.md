@@ -31,7 +31,7 @@ scripts to import generator opc tags into ignition and create UDT
 25. put **udt conversion.py** file and JSON file in same directory
 26. open **udt conversion.py** file: find 'CONFIG' and replace all fields with corresponding paths/file names
 27. run **udt conversion** file in text editor <br>
---> run _ python udt conversion.py _ in terminal
+--> run _python udt conversion.py_ in terminal
 28. save JSON file and import as JSON as direct tags under tag browser
 29. delete old UDT
 30. create UDT instances!
