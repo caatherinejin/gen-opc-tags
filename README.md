@@ -27,7 +27,7 @@ scripts to import generator opc tags into ignition and create UDT
 21. create a new data type under UDT definitions
 22. copy all tags under destination folder and paste into new UDT
 23. copy JSON of UDT
-24. open JSON file in a text editor and use find and replace opc item path to introduce a parameter _(eg. find: nsu\u003dCODESYSSPV3/3S/IecVarAccess;s\u003d|var|Logic.Application.sanchez_emcp**2**_MODBUS. --> replace all: nsu\u003dCODESYSSPV3/3S/IecVarAccess;s\u003d|var|Logic.Application.sanchez_emcp**{genNumber}**_MODBUS.)_
+24. open JSON file in a text editor and use find and replace opc item path to introduce a parameter _(eg. find: nsu\u003dCODESYSSPV3/3S/IecVarAccess;s\u003d|var|Logic.Application.sanchezEMCP**2**MODBUS. --> replace all: nsu\u003dCODESYSSPV3/3S/IecVarAccess;s\u003d|var|Logic.Application.sanchezEMCP**{genNumber}**MODBUS.)_
 25. run **udt conversion** file in text editor
 26. save JSON file and import as JSON as direct tags under tag browser
 27. delete old UDT
