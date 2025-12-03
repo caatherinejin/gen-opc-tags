@@ -28,7 +28,7 @@ scripts to import generator opc tags into ignition:
 22. copy all tags under destination folder and paste into new UDT
 23. copy JSON of UDT
 24. open JSON file in a text editor and use find and replace to introduce a parameter _(eg. find: dse2 --> replace all: {genName})_
-25. run **UDT conversion** file in text editor
+25. run **udt conversion** file in text editor
 26. save JSON file and import as JSON as direct tags under tag browser
 27. delete old UDT
 28. create UDT instances!
