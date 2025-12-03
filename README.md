@@ -2,16 +2,16 @@
 scripts to import generator opc tags into ignition and create UDT
 
 # import tags
-1. create source folder in desired tag provider _(eg. opc data in ST_POWER)_
-2. under tag browser, browse devices --> import OPC tags into source folder _(eg. ST38_GRID_RTAC --> DeviceSet --> Logic --> Resources --> Application --> GlobalVars --> sanchez_emcp2_MODBUS)_
-4. copy path of source folder _(eg. [ST_POWER]Microgrid/Gen Garden/Data Tags/opc data)_\
+1. create source folder in desired tag provider <br> _(eg. opc data in ST_POWER)_
+2. under tag browser, browse devices --> import OPC tags into source folder <br> _(eg. ST38_GRID_RTAC --> DeviceSet --> Logic --> Resources --> Application --> GlobalVars --> sanchez_emcp2_MODBUS)_
+4. copy path of source folder <br> _(eg. [ST_POWER]Microgrid/Gen Garden/Data Tags/opc data)_\
 5. paste into **tag import** file
-6. create destination folder _(eg. sanchez_emcp2_modbus)_
-7. copy path of destination folder _(eg. [ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus)_
+6. create destination folder <br> _(eg. sanchez_emcp2_modbus)_
+7. copy path of destination folder <br> _(eg. [ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus)_
 8. paste into **tag import** file
-9. navigate to connected devices window/browse devices and copy opc item path _(eg. nsu=CODESYSSPV3/3S/IecVarAccess;s=|var|Logic.Application.sanchez_emcp2_MODBUS)_
-10. enter valid tag provider _(eg. ST_POWER)_
-11. enter valid opc server _(eg. ST38_GRID_RTAC)_
+9. navigate to connected devices window/browse devices and copy opc item path <br> _(eg. nsu=CODESYSSPV3/3S/IecVarAccess;s=|var|Logic.Application.sanchez_emcp2_MODBUS)_
+10. enter valid tag provider <br> _(eg. ST_POWER)_
+11. enter valid opc server <br> _(eg. ST38_GRID_RTAC)_
 12. run file in ignition script console
 
 # delete unnecessary tags
@@ -27,7 +27,7 @@ scripts to import generator opc tags into ignition and create UDT
 21. create a new data type under UDT definitions
 22. copy all tags under destination folder and paste into new UDT
 23. copy JSON of UDT
-24. open JSON file in a text editor and use find and replace opc item path to introduce a parameter _(eg. find: nsu\u003dCODESYSSPV3/3S/IecVarAccess;s\u003d|var|Logic.Application.sanchezEMCP**2**MODBUS. --> replace all: nsu\u003dCODESYSSPV3/3S/IecVarAccess;s\u003d|var|Logic.Application.sanchezEMCP**{genNumber}**MODBUS.)_
+24. open JSON file in a text editor and use find and replace opc item path to introduce a parameter <br>_(eg. find: nsu\u003dCODESYSSPV3/3S/IecVarAccess;s\u003d|var|Logic.Application.sanchezEMCP<mark>**2**</mark>MODBUS. <br> --> replace all: nsu\u003dCODESYSSPV3/3S/IecVarAccess;s\u003d|var|Logic.Application.sanchezEMCP<mark>{**genNumber**}</mark>MODBUS.)_
 25. run **udt conversion** file in text editor
 26. save JSON file and import as JSON as direct tags under tag browser
 27. delete old UDT
