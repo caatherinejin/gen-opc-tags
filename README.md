@@ -1,5 +1,5 @@
 # gen-opc-tags
-scripts to import generator opc tags into ignition:
+scripts to import generator opc tags into ignition and create UDT
 
 # import tags
 1. create source folder in desired tag provider _(eg. opc data in ST_POWER)_
