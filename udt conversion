@@ -1,0 +1,35 @@
+import json
+
+def modify_tags(tags, parameter_name='genNumber'):
+    if not isinstance(tags, list):
+        return
+    for tag in tags:
+        if (
+            tag.get('tagType') == 'AtomicTag' and
+            tag.get('valueSource') == 'opc' and
+            isinstance(tag.get('opcItemPath'), str)
+        ):
+            original_path = tag['opcItemPath']
+            modified_binding = original_path.replace('emcp2', f'emcp{{{parameter_name}}}')
+            tag['opcItemPath'] = {
+                'bindType': 'parameter',
+                'binding': modified_binding
+            }
+        if 'tags' in tag:
+            modify_tags(tag['tags'], parameter_name)
+
+def main():
+    file_path = 'emcp.json'
+    try:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+        if 'tags' in data:
+            modify_tags(data['tags'])
+        with open(file_path, 'w') as f:
+            json.dump(data, f, indent=2)
+        print('Modification complete. File updated.')
+    except Exception as e:
+        print(f'Error: {e}')
+
+if __name__ == '__main__':
+    main()
