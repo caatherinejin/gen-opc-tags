@@ -2,7 +2,9 @@ import json
 import re
 
 # Function to recursively modify OPC tags
-def modify_opc_tags(tags, parameter_name='genNumber'):
+# CONFIG (1/4)
+parameter_name = 'genNumber' # replace with your parameter
+def modify_opc_tags(tags, parameter_name):
     if not isinstance(tags, list):
         return 0
 
@@ -37,7 +39,7 @@ def ensure_basepath_parameter(json_data):
     if 'BasePath' not in json_data['parameters']:
         json_data['parameters']['BasePath'] = {
             'dataType': 'String',
-            # CONFIG (1/3)
+            # CONFIG (2/4)
             'value': '[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus' # replace with base tag path
         }
         print('Added new parameter: "BasePath"')
@@ -73,7 +75,7 @@ def modify_expression_tags(tags):
                     new_expression_parts.append(full_expression[last_end:match.start()])
                     # Extract suffix after "sanchez_emcp2_modbus/" (e.g., "Generator_Phase_B_Apparent_Power/status/stVal")
                     inner_part = match.group(1)
-                    # CONFIG (2/3)
+                    # CONFIG (3/4)
                     suffix = inner_part.replace('[ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus/', '') # replace with base tag path
                     # Replace with concat: "({BasePath} + '/suffix')"
                     new_expression_parts.append("({BasePath} + '/" + suffix + "')")
@@ -96,7 +98,7 @@ def modify_expression_tags(tags):
 
 # Main function
 def main():
-    # CONFIG (3/3)
+    # CONFIG (4/4)
     file_path = 'json.json' # replace with name of JSON file
 
     try:
