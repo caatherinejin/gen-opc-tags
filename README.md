@@ -1,7 +1,7 @@
 # gen-opc-tags
 scripts to import generator opc tags into ignition:
-- tag import, tag/folder deletion, history enabled
 
+# import tags
 1. create source folder in desired tag provider _(eg. opc data in ST_POWER)_
 2. under tag browser, browse devices --> import OPC tags into source folder _(eg. ST38_GRID_RTAC --> DeviceSet --> Logic --> Resources --> Application --> GlobalVars --> sanchez_emcp2_MODBUS)_
 4. copy path of source folder _(eg. [ST_POWER]Microgrid/Gen Garden/Data Tags/opc data)_\
@@ -10,11 +10,25 @@ scripts to import generator opc tags into ignition:
 7. copy path of destination folder _(eg. [ST_POWER]Microgrid/Gen Garden/Data Tags/sanchez_emcp2_modbus)_
 8. paste into **tag import** file
 9. navigate to connected devices window/browse devices and copy opc item path _(eg. nsu=CODESYSSPV3/3S/IecVarAccess;s=|var|Logic.Application.sanchez_emcp2_MODBUS)_
-10. enter valid tag provider (eg. ST_POWER)
-11. enter valid opc server (eg. ST38_GRID_RTAC)
+10. enter valid tag provider _(eg. ST_POWER)_
+11. enter valid opc server _(eg. ST38_GRID_RTAC)_
 12. run file in ignition script console
-13. paste destination folder path into **tag deletion** file
-14. run file in ignition script console
-15. paste destination folder into **enables history** file
-16. paste history provider database into **enables history** file (eg. ST_UTIL_DB_PRI)
-17. run file in ignition script console
+
+# delete unnecessary tags
+14. paste destination folder path into **tag deletion** file
+15. run file in ignition script console
+
+# enable tag historian on tags
+17. paste destination folder into **enables history** file
+18. paste history provider database into **enables history** file _(eg. ST_UTIL_DB_PRI)_
+19. run file in ignition script console
+
+# create udt
+21. create a new data type under UDT definitions
+22. copy all tags under destination folder and paste into new UDT
+23. copy JSON of UDT
+24. open JSON file in a text editor and use find and replace to introduce a parameter _(eg. find: dse2 --> replace all: {genName})_
+25. run **UDT conversion** file in text editor
+26. save JSON file and import as JSON as direct tags under tag browser
+27. delete old UDT
+28. create UDT instances!
