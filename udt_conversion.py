@@ -2,9 +2,9 @@ import json
 import re
 
 # Function to recursively modify OPC tags
+
 # CONFIG (1/4)
-parameter_name = 'genNumber' # replace with your parameter
-def modify_opc_tags(tags, parameter_name):
+def modify_opc_tags(tags, parameter_name = 'genNumber'):
     if not isinstance(tags, list):
         return 0
 
